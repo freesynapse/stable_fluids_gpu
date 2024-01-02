@@ -11,6 +11,6 @@ layout (binding = 0) uniform sampler2D u_field;
 //
 void main()
 {
-    out_color = u_value * texture(u_field, C);
+    out_color = vec4(u_value * texture(u_field, C).xyz, 1.0);
 
 }

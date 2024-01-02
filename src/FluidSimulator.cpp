@@ -119,8 +119,9 @@ void FluidSimulator::keyPress(int _key)
         case SYN_KEY_LEFT:  prev_field_(); break;
         case SYN_KEY_R:
         {
-            // clear velocity and density fields
             Quad::bind();
+
+            // clear density
             m_tmpField->bind();
             m_clearShader->enable();
             m_clearShader->setUniform2fv("u_tx_size", m_txSize);
@@ -130,6 +131,19 @@ void FluidSimulator::keyPress(int _key)
             Quad::render();
             std::swap(m_tmpField, m_density);
 
+            // clear velocity
+            m_tmpField->bind();
+            m_velocity->bindTexture(0);
+            m_clearShader->setUniform1i("u_field", 0);
+            Quad::render();
+            std::swap(m_tmpField, m_velocity);
+
+            // clear pressure
+            m_tmpField->bind();
+            m_pressure->bindTexture(0);
+            m_clearShader->setUniform1i("u_field", 0);
+            Quad::render();
+            std::swap(m_tmpField, m_pressure);
         }
     }
 }
@@ -287,9 +301,9 @@ void FluidSimulator::render(float _dt)
     switch (m_activeScalarField)
     {
         case DENSITY_FIELD:     m_fieldRenderer.renderScalarField(m_density, false);    break;
-        case DIVERGENCE_FIELD:  m_fieldRenderer.renderScalarField(m_divergence, true);  break;
-        case PRESSURE_FIELD:    m_fieldRenderer.renderScalarField(m_pressure, true);    break;
-        case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, true);        break;
+        case DIVERGENCE_FIELD:  m_fieldRenderer.renderScalarField(m_divergence, false);  break;
+        case PRESSURE_FIELD:    m_fieldRenderer.renderScalarField(m_pressure, false);    break;
+        case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, false);        break;
     }
 
     // m_fieldRenderer.renderScalarField(m_divergence, true);
