@@ -167,7 +167,7 @@ private:
             layout (location = 0) out vec4 out_color;
             in vec2 C;
             layout (binding = 0) uniform sampler2D u_field;
-            uniform vec2 u_range = vec2(0.0, 1.0);
+            uniform vec2 u_range;
             float max_range_inv = 1.0 / u_range.y;
             
             void main()

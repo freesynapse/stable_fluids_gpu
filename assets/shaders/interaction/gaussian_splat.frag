@@ -17,6 +17,6 @@ void main()
     p.x *= u_ar;
     float splat = exp(-dot(p, p) / u_radius);
     float base = texture(u_density, C).x;
-    out_density = vec4(vec3(base + splat), 1.0);
+    out_density = vec4(base + 0.1 * splat, 0.0, 0.0, 1.0);
 
 }

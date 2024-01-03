@@ -72,6 +72,7 @@ void layer::onUpdate(float _dt)
     
     // -- BEGINNING OF SIMULATION -- //
 
+    m_fluid.handleInput();
     m_fluid.step(_dt);
         
     // -- END OF SIMULATION -- //
@@ -135,7 +136,7 @@ void layer::onKeyDownEvent(Event *_e)
             default: break;
         }
     
-        m_fluid.keyPress(e->getKey());
+        m_fluid.onKeyPress(e->getKey());
     }
     
     
@@ -153,8 +154,8 @@ void layer::onMouseButtonEvent(Event *_e)
         default: break;
     }
 
-    if (e->getAction() == SYN_MOUSE_PRESSED)
-        m_fluid.mouseClick(e->getButton());        
+    // if (e->getAction() == SYN_MOUSE_PRESSED)
+    //     m_fluid.onMouseClick(e->getButton());
 
 }
 
