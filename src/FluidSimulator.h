@@ -43,6 +43,18 @@ private:
     void prev_field_() { change_current_field_(-1); }
 
 private:
+    // solver functions -- in FluidSimulatorSolver.cpp
+    void advect(Ref<FieldFBO> &_quantity);  // advect a quantity by the velocity field
+    void computeDivergence();
+    void solvePressure();                   // solve the pressure-Poisson equation
+    void subtractPressureGradient();
+    void computeCurl();
+
+    // helper functions
+    void clearField(Ref<FieldFBO> &_field);
+
+
+private:
 
     // dimensions etc
     glm::ivec2 m_vp;
@@ -55,6 +67,7 @@ private:
     // solver parameters
     float m_dissipation = 0.0f;
     uint32_t m_jacobiIterCount = 0;
+    float m_dt = 0.0f;
 
     // fields and shaders
     Ref<FieldFBO> m_velocity;
