@@ -44,11 +44,12 @@ private:
 
 private:
     // solver functions -- in FluidSimulatorSolver.cpp
-    void advect(Ref<FieldFBO> &_quantity);  // advect a quantity by the velocity field
+    void advect(Ref<FieldFBO> &_quantity, float _dissipation);
     void computeDivergence();
-    void solvePressure();                   // solve the pressure-Poisson equation
+    void solvePressure();
     void subtractPressureGradient();
     void computeCurl();
+    void applyVorticityConfinement();
 
     // helper functions
     void clearField(Ref<FieldFBO> &_field);
@@ -65,8 +66,10 @@ private:
     bool m_initialized = false;
 
     // solver parameters
-    float m_dissipation = 0.0f;
+    float m_velocityDissipation = 0.0f;
+    float m_densityDissipation = 0.0f;
     uint32_t m_jacobiIterCount = 0;
+    float m_confinement = 0.0f;
     float m_dt = 0.0f;
 
     // fields and shaders
@@ -84,6 +87,7 @@ private:
     Ref<Shader> m_pressureShader;
     Ref<Shader> m_projectionShader;
     Ref<Shader> m_curlShader;
+    Ref<Shader> m_vorticityShader;
     
     // interaction shaders
     Ref<Shader> m_splatShader;

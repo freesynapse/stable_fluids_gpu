@@ -17,9 +17,10 @@ FluidSimulator::FluidSimulator(const glm::ivec2 &_vp, int _downsampling)
     m_txSize = 1.0f / glm::vec2(m_shape.x, m_shape.y);
 
     // solver parameters
-    // m_dissipation = 1.0f;
-    m_dissipation = 0.997f;
+    m_densityDissipation = 0.997f;
+    m_velocityDissipation = 0.997f;
     m_jacobiIterCount = 40;
+    m_confinement = 0.2f;
 
     // create fields
     m_velocity      = VectorField(m_shape, "velocity_field");
@@ -56,6 +57,12 @@ FluidSimulator::FluidSimulator(const glm::ivec2 &_vp, int _downsampling)
                                 FileName("../assets/shaders/stencil.vert"),
                                 FileName("../assets/shaders/solver/curl.frag"));
     
+    m_vorticityShader = ShaderLibrary::load(
+                                "vorticity_confinement_shader",
+                                FileName("../assets/shaders/stencil.vert"),
+                                FileName("../assets/shaders/solver/vorticity_confinement.frag"));
+    
+
     // interaction shaders
     m_splatShader = ShaderLibrary::load(
                                 "splat_shader",
@@ -79,25 +86,25 @@ FluidSimulator::FluidSimulator(const glm::ivec2 &_vp, int _downsampling)
                                                       FileName("../assets/shaders/debug/init_velocity.frag"));
 
     // initial conditions
-    Quad::bind();
-    m_velocity->bind();
-    __debug__initVelocityShader->enable();
-    __debug__initVelocityShader->setUniform2fv("u_tx_size", m_txSize);
-    Quad::render();
+    // Quad::bind();
+    // m_velocity->bind();
+    // __debug__initVelocityShader->enable();
+    // __debug__initVelocityShader->setUniform2fv("u_tx_size", m_txSize);
+    // Quad::render();
 
-    glm::vec2 point = { 0.3f, 0.3f };
-    float radius = 0.005f;
-    Quad::bind();
-    m_tmpField->bind();
-    m_splatShader->enable();
-    m_splatShader->setUniform2fv("u_tx_size", m_txSize);
-    m_splatShader->setUniform1f("u_ar", m_aspectRatioX);
-    m_splatShader->setUniform2fv("u_point", point);
-    m_splatShader->setUniform1f("u_radius", radius);
-    m_density->bindTexture(0);
-    m_splatShader->setUniform1i("u_field", 0);
-    Quad::render();
-    std::swap(m_tmpField, m_density);
+    // glm::vec2 point = { 0.3f, 0.3f };
+    // float radius = 0.005f;
+    // Quad::bind();
+    // m_tmpField->bind();
+    // m_splatShader->enable();
+    // m_splatShader->setUniform2fv("u_tx_size", m_txSize);
+    // m_splatShader->setUniform1f("u_ar", m_aspectRatioX);
+    // m_splatShader->setUniform2fv("u_point", point);
+    // m_splatShader->setUniform1f("u_radius", radius);
+    // m_density->bindTexture(0);
+    // m_splatShader->setUniform1i("u_field", 0);
+    // Quad::render();
+    // std::swap(m_tmpField, m_density);
 
     // visualization
     m_showQuivers = false;
@@ -121,30 +128,9 @@ void FluidSimulator::keyPress(int _key)
         {
             Quad::bind();
             clearField(m_density);
-            // m_tmpField->bind();
-            // m_clearShader->enable();
-            // m_clearShader->setUniform2fv("u_tx_size", m_txSize);
-            // m_clearShader->setUniform1f("u_value", 0.0f);
-            // m_density->bindTexture(0);
-            // m_clearShader->setUniform1i("u_field", 0);
-            // Quad::render();
-            // std::swap(m_tmpField, m_density);
-
-            // clear velocity
             clearField(m_velocity);
-            // m_tmpField->bind();
-            // m_velocity->bindTexture(0);
-            // m_clearShader->setUniform1i("u_field", 0);
-            // Quad::render();
-            // std::swap(m_tmpField, m_velocity);
-
-            // clear pressure
             clearField(m_pressure);
-            // m_tmpField->bind();
-            // m_pressure->bindTexture(0);
-            // m_clearShader->setUniform1i("u_field", 0);
-            // Quad::render();
-            // std::swap(m_tmpField, m_pressure);
+
         }
     }
 }
@@ -214,90 +200,27 @@ void FluidSimulator::step(float _dt)
 
     Quad::bind();
 
-    // advect velocity
-    // m_tmpField->bind();
-    // m_advectionShader->enable();
-    // m_advectionShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_velocity->bindTexture(0);
-    // m_advectionShader->setUniform1i("u_velocity", 0);
-    // m_velocity->bindTexture(1, 0, GL_LINEAR);
-    // m_advectionShader->setUniform1i("u_quantity", 1);
-    // m_advectionShader->setUniform1f("u_dissipation", m_dissipation);
-    // m_advectionShader->setUniform1f("u_dt", _dt);
-    // Quad::render();
-    // std::swap(m_tmpField, m_velocity);
-    advect(m_velocity);
+    // advect the velocity by itself
+    advect(m_velocity, m_velocityDissipation);
 
-    // compute divergence
+    // compute the divergence for enforcing a divergence-free velocity field (below)
     computeDivergence();
-    // m_divergence->bind();
-    // m_divergenceShader->enable();
-    // m_divergenceShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_velocity->bindTexture(0);
-    // m_divergenceShader->setUniform1i("u_velocity", 0);
-    // Quad::render();
-    // auto r = m_divergence->range();
-    // printf("div range = %f .. %f\n", r.first[0], r.second[0]);
-
-    // solve for pressure
+    
+    // solve the pressure Poisson equation, using a Jacobi solver
     solvePressure();
-    // m_tmpField->bind();
-    // m_pressureShader->enable();
-    // m_pressureShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_divergence->bindTexture(0);
-    // m_pressureShader->setUniform1i("u_divergence", 0);
-    // m_pressure->bindTexture(1);
-    // m_pressureShader->setUniform1i("u_pressure", 1);
-    // Quad::render();
-
-    // // m_tmpField now holds the pressure
-    // for (uint32_t i = 0; i < m_jacobiIterCount; i++)
-    // {
-    //     m_tmpField2->bind();
-    //     m_divergence->bindTexture(0);
-    //     m_pressureShader->setUniform1i("u_divergence", 0);
-    //     m_tmpField->bindTexture(1);
-    //     m_pressureShader->setUniform1i("u_pressure", 1);
-    //     Quad::render();
-    //     std::swap(m_tmpField, m_tmpField2);
-    // }
-    // std::swap(m_tmpField, m_pressure);
     
     // subtract the gradient of the pressure from the velocity, enforcing the
     // divergence-free fluid.
     subtractPressureGradient();
-    // m_tmpField->bind();
-    // m_projectionShader->enable();
-    // m_projectionShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_pressure->bindTexture(0);
-    // m_projectionShader->setUniform1i("u_pressure", 0);
-    // m_velocity->bindTexture(1);
-    // m_projectionShader->setUniform1i("u_velocity", 1);
-    // Quad::render();
-    // std::swap(m_tmpField, m_velocity);
 
-    // compute curl
+    // vorticity confinement
     computeCurl();
-    // m_curl->bind();
-    // m_curlShader->enable();
-    // m_curlShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_velocity->bindTexture(0);
-    // m_curlShader->setUniform1i("u_velocity", 0);
-    // Quad::render();
+    // auto r = m_curl->range();
+    // printf("curl : [%f .. %f]\n", r.first[0], r.second[0]);
+    applyVorticityConfinement();
 
-    // advect density
-    advect(m_density);
-    // m_tmpField->bind();
-    // m_advectionShader->enable();
-    // m_advectionShader->setUniform2fv("u_tx_size", m_txSize);
-    // m_velocity->bindTexture(0);
-    // m_advectionShader->setUniform1i("u_velocity", 0);
-    // m_density->bindTexture(1, 0, GL_LINEAR);
-    // m_advectionShader->setUniform1i("u_quantity", 1);
-    // m_advectionShader->setUniform1f("u_dissipation", m_dissipation);
-    // m_advectionShader->setUniform1f("u_dt", _dt);
-    // Quad::render();
-    // std::swap(m_tmpField, m_density);
+    // finally, advect the density by the velocity field
+    advect(m_density, m_densityDissipation);
 
 }
 
@@ -312,13 +235,13 @@ void FluidSimulator::render(float _dt)
         case DENSITY_FIELD:     m_fieldRenderer.renderScalarField(m_density, false);    break;
         case DIVERGENCE_FIELD:  m_fieldRenderer.renderScalarField(m_divergence, false); break;
         case PRESSURE_FIELD:    m_fieldRenderer.renderScalarField(m_pressure, false);   break;
-        case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, false);       break;
+        case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, true);       break;
     }
 
     // m_fieldRenderer.renderScalarField(m_divergence, true);
 
     if (m_showQuivers)
-        m_fieldRenderer.renderVectorFieldQuivers(m_velocity, 8, true, m_vp);
+        m_fieldRenderer.renderVectorFieldQuivers(m_velocity, 16, true, m_vp);
 
 }
 

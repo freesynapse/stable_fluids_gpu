@@ -2,7 +2,7 @@
 #include "FluidSimulator.h"
 
 //
-void FluidSimulator::advect(Ref<FieldFBO> &_quantity)
+void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
 {
     m_tmpField->bind();
     m_advectionShader->enable();
@@ -11,7 +11,7 @@ void FluidSimulator::advect(Ref<FieldFBO> &_quantity)
     m_advectionShader->setUniform1i("u_velocity", 0);
     _quantity->bindTexture(1, 0, GL_LINEAR);
     m_advectionShader->setUniform1i("u_quantity", 1);
-    m_advectionShader->setUniform1f("u_dissipation", m_dissipation);
+    m_advectionShader->setUniform1f("u_dissipation", _dissipation);
     m_advectionShader->setUniform1f("u_dt", m_dt);
     Quad::render();
     std::swap(m_tmpField, _quantity);
@@ -80,6 +80,23 @@ void FluidSimulator::computeCurl()
     m_velocity->bindTexture(0);
     m_curlShader->setUniform1i("u_velocity", 0);
     Quad::render();
+
+}
+
+//---------------------------------------------------------------------------------------
+void FluidSimulator::applyVorticityConfinement()
+{
+    m_tmpField->bind();
+    m_vorticityShader->enable();
+    m_vorticityShader->setUniform2fv("u_tx_size", m_txSize);
+    m_vorticityShader->setUniform1f("u_confinement", m_confinement);
+    m_vorticityShader->setUniform1f("u_dt", m_dt);
+    m_velocity->bindTexture(0);
+    m_vorticityShader->setUniform1i("u_velocity", 0);
+    m_curl->bindTexture(1);
+    m_vorticityShader->setUniform1i("u_curl", 1);
+    Quad::render();
+    std::swap(m_tmpField, m_velocity);
 
 }
 
