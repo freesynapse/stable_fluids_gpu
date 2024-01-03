@@ -72,7 +72,6 @@ void FluidSimulator::onKeyPress(int _key)
 //---------------------------------------------------------------------------------------
 void FluidSimulator::handleInput()
 {
-    static bool is_clicked = false;
     static glm::vec2 mpos, prev_mpos;
     mpos = InputManager::get_mouse_position();
     glm::vec2 mpos_norm = mpos_vp_to_screen_(mpos);
@@ -100,7 +99,7 @@ void FluidSimulator::handleInput()
         }
 
     }
-        
+
     if (InputManager::is_key_pressed(SYN_KEY_ENTER))
     {
         Quad::bind();
