@@ -23,6 +23,7 @@ public:
     void handleInput();
     void onKeyPress(int _key);
     const char *displayFieldName();
+    float avgStepTimeMs() { return m_solverTimeAvgMs; }
 
     // solver
     void step(float _dt);
@@ -50,6 +51,17 @@ private:
         mpos_norm.x = clamp(mpos_norm.x, 0.0f, 1.0f);
         mpos_norm.y = clamp(mpos_norm.y, 0.0f, 1.0f);
         return mpos_norm;
+    }
+
+    __always_inline
+    void add_time_to_avg(std::list<float> &_list, float _time_ms)
+    {
+        static int n = 100;
+        if (_list.size() >= n)
+            _list.pop_front();
+        _list.push_back(_time_ms);
+
+        m_solverTimeAvgMs = std::accumulate(_list.begin(), _list.end(), 0.0f) / (float)_list.size();
     }
 
 private:
@@ -82,6 +94,10 @@ private:
 
     // solver parameters
     float m_dt = 0.0f;
+
+    //
+    std::list<float> m_solverTimes;
+    float m_solverTimeAvgMs = 0.0f;
 
     // fields and shaders
     Ref<FieldFBO> m_velocity;

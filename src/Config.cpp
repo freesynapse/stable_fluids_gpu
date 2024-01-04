@@ -9,7 +9,7 @@ Property<float>     Config::velocityDissipation(0.997f, 0.95f, 1.0f);
 Property<float>     Config::densityDissipation(0.997f, 0.95f, 1.0f);
 Property<float>     Config::vorticityDissipation(0.7f, 0.0f, 1.0f);
 Property<float>     Config::vorticityConfinement(0.1f, 0.0f, 5.0f);
-Property<int>       Config::jacobiIterCount(50, 5, 100);
+Property<int>       Config::jacobiIterCount(40, 5, 100);
 
 Property<float>     Config::forceRadius(0.001f, 0.001f, 0.02f);
 Property<float>     Config::forceMultiplier(10.0f, 1.0f, 120.0f);
@@ -24,10 +24,7 @@ Property<int>       Config::quiverSamplingRate(8, 1, 64);
 //---------------------------------------------------------------------------------------
 void Config::settingsDialog()
 {
-    // ImGui::ShowDemoWindow();
-
-    
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
     ImGui::Begin("Settings", __null, ImGuiWindowFlags_NoNavInputs);
 
     ImGui::SetNextItemOpen(true);

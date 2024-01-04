@@ -114,6 +114,8 @@ void FluidSimulator::handleInput()
 //---------------------------------------------------------------------------------------
 void FluidSimulator::step(float _dt)
 {
+    Timer t;
+
     if (!m_initialized || !Config::isRunning())
         return;
 
@@ -136,12 +138,13 @@ void FluidSimulator::step(float _dt)
 
     // vorticity confinement
     computeCurl();
-    // auto r = m_curl->range();
-    // printf("curl : [%f .. %f]\n", r.first[0], r.second[0]);
     applyVorticityConfinement();
 
     // finally, advect the density by the velocity field
     advect(m_density, Config::densityDissipation());
+
+    //
+    add_time_to_avg(m_solverTimes, t.getDeltaTimeMs());
 
 }
 
