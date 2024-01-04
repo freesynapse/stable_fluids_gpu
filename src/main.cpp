@@ -101,7 +101,7 @@ void layer::onUpdate(float _dt)
     int i = 0;
     m_font->beginRenderBlock();
 	m_font->addString(2.0f, fontHeight * ++i, "fps=%.0f  VSYNC=%s", TimeStep::getFPS(), Application::get().getWindow().isVSYNCenabled() ? "ON" : "OFF");
-    m_font->addString(2.0f, fontHeight * ++i, "field=%s  running=%s", m_fluid.displayFieldName(), Config::isRunning ? "TRUE" : "FALSE");
+    m_font->addString(2.0f, fontHeight * ++i, "field=%s  running=%s", m_fluid.displayFieldName(), Config::isRunning() ? "TRUE" : "FALSE");
     m_font->endRenderBlock();
 
     //
@@ -209,7 +209,11 @@ void layer::onImGuiRender()
     }
 	
     //-----------------------------------------------------------------------------------
-    // set the 'rest' of the window as the viewport
+    // UI for solver
+    Config::settingsDialog();
+
+    //-----------------------------------------------------------------------------------
+    // viewport
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("synapse-core::renderer");
     static ImVec2 oldSize = { 0, 0 };
@@ -228,7 +232,6 @@ void layer::onImGuiRender()
 
     ImGui::End();
     ImGui::PopStyleVar();
-
 
     // end root
     ImGui::End();

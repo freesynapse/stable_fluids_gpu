@@ -53,8 +53,8 @@ void FluidSimulator::onKeyPress(int _key)
 {
     switch (_key)
     {
-        case SYN_KEY_TAB:   Config::showQuivers = !Config::showQuivers; break;
-        case SYN_KEY_SPACE: Config::isRunning = !Config::isRunning; break;
+        case SYN_KEY_TAB:   Config::showQuivers = !Config::showQuivers(); break;
+        case SYN_KEY_SPACE: Config::isRunning = !Config::isRunning(); break;
         case SYN_KEY_RIGHT: next_field_(); break;
         case SYN_KEY_LEFT:  prev_field_(); break;
         case SYN_KEY_R:
@@ -82,7 +82,7 @@ void FluidSimulator::handleInput()
         // glm::vec2 delta_mpos = mpos - prev_mpos;
         glm::vec2 delta_mpos = mpos_norm - mpos_vp_to_screen_(prev_mpos);
         glm::vec2 dir = glm::normalize(delta_mpos);
-        float force = min(Config::forceMultiplier * glm::length(delta_mpos), 100.0f);
+        float force = min(Config::forceMultiplier() * glm::length(delta_mpos), 100.0f);
      
         if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1))
         {
@@ -114,7 +114,7 @@ void FluidSimulator::handleInput()
 //---------------------------------------------------------------------------------------
 void FluidSimulator::step(float _dt)
 {
-    if (!m_initialized || !Config::isRunning)
+    if (!m_initialized || !Config::isRunning())
         return;
 
     m_dt = _dt;
@@ -122,7 +122,7 @@ void FluidSimulator::step(float _dt)
     Quad::bind();
 
     // advect the velocity by itself
-    advect(m_velocity, Config::velocityDissipation);
+    advect(m_velocity, Config::velocityDissipation());
 
     // compute the divergence for enforcing a divergence-free velocity field (below)
     computeDivergence();
@@ -141,7 +141,7 @@ void FluidSimulator::step(float _dt)
     applyVorticityConfinement();
 
     // finally, advect the density by the velocity field
-    advect(m_density, Config::densityDissipation);
+    advect(m_density, Config::densityDissipation());
 
 }
 
@@ -158,9 +158,9 @@ void FluidSimulator::render(float _dt)
         case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, true); break;
     }
 
-    if (Config::showQuivers)
+    if (Config::showQuivers())
         m_fieldRenderer.renderVectorFieldQuivers(m_velocity, 
-                                                 Config::quiverSamplingRate, 
+                                                 Config::quiverSamplingRate(), 
                                                  true, 
                                                  m_vp);
 

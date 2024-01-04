@@ -42,7 +42,7 @@ void FluidSimulator::solvePressure()
     Quad::render();
     
     // m_tmpField now holds the pressure
-    for (uint32_t i = 0; i < Config::jacobiIterCount; i++)
+    for (uint32_t i = 0; i < Config::jacobiIterCount(); i++)
     {
         m_tmpField2->bind();
         m_divergence->bindTexture(0);
@@ -89,8 +89,8 @@ void FluidSimulator::applyVorticityConfinement()
     m_tmpField->bind();
     m_vorticityShader->enable();
     m_vorticityShader->setUniform2fv("u_tx_size", m_txSize);
-    m_vorticityShader->setUniform1f("u_confinement", Config::vorticityConfinement);
-    m_vorticityShader->setUniform1f("u_dissapation", Config::vorticityDissapation);
+    m_vorticityShader->setUniform1f("u_confinement", Config::vorticityConfinement());
+    m_vorticityShader->setUniform1f("u_Dissipation", Config::vorticityDissipation());
     m_vorticityShader->setUniform1f("u_dt", m_dt);
     m_velocity->bindTexture(0);
     m_vorticityShader->setUniform1i("u_velocity", 0);
@@ -113,7 +113,7 @@ void FluidSimulator::applyForce(const glm::vec2 &_pos,
     m_applyForceShader->setUniform2fv("u_point", _pos);
     m_applyForceShader->setUniform2fv("u_direction", _direction);
     m_applyForceShader->setUniform1f("u_force", _force);
-    m_applyForceShader->setUniform1f("u_radius", Config::forceRadius);
+    m_applyForceShader->setUniform1f("u_radius", Config::forceRadius());
     m_velocity->bindTexture(0);
     m_applyForceShader->setUniform1i("u_velocity", 0);
     Quad::render();
@@ -129,7 +129,7 @@ void FluidSimulator::addDensity(const glm::vec2 &_pos)
     m_splatShader->setUniform2fv("u_tx_size", m_txSize);
     m_splatShader->setUniform1f("u_ar", m_aspectRatioX);
     m_splatShader->setUniform2fv("u_point", _pos);
-    m_splatShader->setUniform1f("u_radius", Config::splatRadius);
+    m_splatShader->setUniform1f("u_radius", Config::densityRadius());
     m_density->bindTexture(0);
     m_splatShader->setUniform1i("u_density", 0);
     Quad::render();
