@@ -82,7 +82,7 @@ void FluidSimulator::handleInput()
         // glm::vec2 delta_mpos = mpos - prev_mpos;
         glm::vec2 delta_mpos = mpos_norm - mpos_vp_to_screen_(prev_mpos);
         glm::vec2 dir = glm::normalize(delta_mpos);
-        float force = min(Config::forceMultiplier() * glm::length(delta_mpos), 100.0f);
+        float force = min(Config::forceMultiplier() * glm::length(delta_mpos), Config::forceMultiplier.m_max);
      
         if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1))
         {
@@ -97,13 +97,6 @@ void FluidSimulator::handleInput()
             applyForce(mpos_norm, dir, force);
 
         }
-
-    }
-
-    if (InputManager::is_key_pressed(SYN_KEY_ENTER))
-    {
-        Quad::bind();
-        addDensity(mpos_norm);
 
     }
 

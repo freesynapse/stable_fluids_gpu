@@ -91,6 +91,7 @@ private:
     int m_sampling;
     glm::vec2 m_txSize;
     bool m_initialized = false;
+    Ref<Quad> m_quad = nullptr;
 
     // solver parameters
     float m_dt = 0.0f;

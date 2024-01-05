@@ -81,7 +81,7 @@ void layer::onUpdate(float _dt)
     renderer.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (m_wireframeMode)
-        renderer.enableWireFrame();    
+        renderer.enableWireFrame();
 
 
     // -- BEGINNING OF SCENE -- //
