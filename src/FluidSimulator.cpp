@@ -149,9 +149,18 @@ void FluidSimulator::render(float _dt)
 
     switch (m_activeScalarField)
     {
-        case DENSITY_FIELD:     m_fieldRenderer.renderScalarField(m_density, false); break;
-        case PRESSURE_FIELD:    m_fieldRenderer.renderScalarField(m_pressure, false); break;
-        case CURL_FIELD:        m_fieldRenderer.renderScalarField(m_curl, true); break;
+        case DENSITY_FIELD:
+            m_fieldRenderer.renderScalarField(m_density, false);
+            break;
+        
+        case PRESSURE_FIELD:
+            m_fieldRenderer.renderScalarField(m_pressure, true, PRESSURE_FIELD);
+            break;
+        
+        case CURL_FIELD:
+            m_fieldRenderer.renderScalarField(m_curl, true, CURL_FIELD);
+            break;
+
     }
 
     if (Config::showQuivers())

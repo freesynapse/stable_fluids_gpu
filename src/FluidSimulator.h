@@ -5,13 +5,6 @@
 #include "Config.h"
 
 //
-#define DENSITY_FIELD       0
-#define PRESSURE_FIELD      1
-#define CURL_FIELD          2
-
-#define FIELD_COUNT         3
-
-//
 class FluidSimulator
 {
 public:

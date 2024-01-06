@@ -30,16 +30,11 @@ void Config::settingsDialog()
     ImGui::SetNextItemOpen(true);
     if (ImGui::TreeNode("Solver parameters"))
     {
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##velocity", &velocityDissipation.m_val, velocityDissipation.m_min, velocityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("velocity dissipation"); 
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##density", &densityDissipation.m_val, densityDissipation.m_min, densityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("density dissipation"); 
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##vorticity", &vorticityDissipation.m_val, vorticityDissipation.m_min, vorticityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("vorticity dissipation"); 
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderInt("##jacobi_iter", &jacobiIterCount.m_val, jacobiIterCount.m_min, jacobiIterCount.m_max); ImGui::SameLine(); ImGui::Text("Jacobi iterations");
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##confinement", &vorticityConfinement.m_val, vorticityConfinement.m_min, vorticityConfinement.m_max, "%.1f", 1.0f); ImGui::SameLine(); ImGui::Text("vorticity confinement"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##velocity", &velocityDissipation.m_val, velocityDissipation.m_min, velocityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("velocity dissipation"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##density", &densityDissipation.m_val, densityDissipation.m_min, densityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("density dissipation"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##vorticity", &vorticityDissipation.m_val, vorticityDissipation.m_min, vorticityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("vorticity dissipation"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderInt("##jacobi_iter", &jacobiIterCount.m_val, jacobiIterCount.m_min, jacobiIterCount.m_max); ImGui::SameLine(); ImGui::Text("Jacobi iterations");
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##confinement", &vorticityConfinement.m_val, vorticityConfinement.m_min, vorticityConfinement.m_max, "%.1f", 1.0f); ImGui::SameLine(); ImGui::Text("vorticity confinement"); 
         
         ImGui::TreePop();
 
@@ -48,12 +43,9 @@ void Config::settingsDialog()
     ImGui::SetNextItemOpen(true);
     if (ImGui::TreeNode("Interaction behaviour"))
     {
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##force_r", &forceRadius.m_val, forceRadius.m_min, forceRadius.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("force radius"); 
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##force_mult", &forceMultiplier.m_val, forceMultiplier.m_min, forceMultiplier.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("force multiplier"); 
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderFloat("##dens_r", &densityRadius.m_val, densityRadius.m_min, densityRadius.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("density radius"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##force_r", &forceRadius.m_val, forceRadius.m_min, forceRadius.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("force radius"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##force_mult", &forceMultiplier.m_val, forceMultiplier.m_min, forceMultiplier.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("force multiplier"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##dens_r", &densityRadius.m_val, densityRadius.m_min, densityRadius.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("density radius"); 
 
         ImGui::TreePop();
 
@@ -72,8 +64,7 @@ void Config::settingsDialog()
     if (ImGui::TreeNode("Rendering"))
     {
         ImGui::Checkbox("RGB scalar fields", &renderRGB.m_val);
-        ImGui::SetNextItemWidth(300.0f);
-        ImGui::SliderInt("##quiver_sampling", &quiverSamplingRate.m_val, quiverSamplingRate.m_min, quiverSamplingRate.m_max); ImGui::SameLine(); ImGui::Text("quiver sampling rate");
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderInt("##quiver_sampling", &quiverSamplingRate.m_val, quiverSamplingRate.m_min, quiverSamplingRate.m_max); ImGui::SameLine(); ImGui::Text("quiver sampling rate");
         ImGui::TreePop();
 
     }
