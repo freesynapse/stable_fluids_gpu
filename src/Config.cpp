@@ -8,16 +8,16 @@
 // static decls
 Property<float>     Config::domainWidth(1.0f, 1.0f, 5.0f);
 Property<float>     Config::mu(0.001f, 0.0f, 1.0f);
-Property<float>     Config::rho(1000.0f, 100.0f, 10000.0f);
+Property<float>     Config::rho(100.0f, 10.0f, 10000.0f);
 // Property<float>     Config::velocityDissipation(0.997f, 0.95f, 1.0f);
-Property<float>     Config::densityDissipation(0.999f, 0.95f, 1.0f);
+Property<float>     Config::densityDissipation(0.997f, 0.95f, 1.0f);
 // Property<float>     Config::vorticityDissipation(0.9f, 0.0f, 1.0f);
-Property<float>     Config::vorticityConfinement(0.03f, 0.0f, 0.2f);
+Property<float>     Config::vorticityConfinement(0.02f, 0.0f, 0.2f);
 Property<int>       Config::jacobiIterCount(40, 5, 100);
 
-Property<float>     Config::forceRadius(0.002f, 0.001f, 0.02f);
-Property<float>     Config::forceMultiplier(20.0f, 1.0f, 120.0f);
-Property<float>     Config::densityRadius(0.002f, 0.001f, 0.02f);
+Property<float>     Config::forceRadius(0.001f, 0.001f, 0.02f);
+Property<float>     Config::forceMultiplier(25.0f, 1.0f, 120.0f);
+Property<float>     Config::densityRadius(0.001f, 0.001f, 0.02f);
 
 Property<bool>      Config::isRunning(true, false, true);
 Property<bool>      Config::showQuivers(false, false, true);

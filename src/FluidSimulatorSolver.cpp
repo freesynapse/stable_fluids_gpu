@@ -11,8 +11,8 @@ void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
     m_advectionShader->setUniform1i("u_velocity", 0);
     _quantity->bindTexture(1, 0, GL_LINEAR);
     m_advectionShader->setUniform1i("u_quantity", 1);
-    // m_advectionShader->setUniform1f("u_dissipation", _dissipation);
-    m_advectionShader->setUniform1f("u_dissipation", 1.0f);
+    m_advectionShader->setUniform1f("u_dissipation", _dissipation);
+    // m_advectionShader->setUniform1f("u_dissipation", 1.0f);
     m_advectionShader->setUniform1f("u_dt", m_dt);
     Quad::render();
     std::swap(m_tmpField, _quantity);
