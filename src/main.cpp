@@ -101,7 +101,7 @@ void layer::onUpdate(float _dt)
     int i = 0;
     m_font->beginRenderBlock();
 	m_font->addString(2.0f, fontHeight * ++i, "fps=%.0f  VSYNC=%s", TimeStep::getFPS(), Application::get().getWindow().isVSYNCenabled() ? "ON" : "OFF");
-    m_font->addString(2.0f, fontHeight * ++i, "field=%s  running=%s  step=%.3f ms", m_fluid.displayFieldName(), Config::isRunning() ? "TRUE" : "FALSE", m_fluid.avgStepTimeMs());
+    m_font->addString(2.0f, fontHeight * ++i, "field=%s  running=%s  step=%.3f ms", Config::scalarFieldID.c_str(), Config::isRunning() ? "TRUE" : "FALSE", m_fluid.avgStepTimeMs());
     m_font->endRenderBlock();
 
     //

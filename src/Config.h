@@ -4,8 +4,10 @@
 #include <typeinfo>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 #include <synapse/External/imgui/imgui.h>
+#include <glm/glm.hpp>
 
 //
 template<typename T>
@@ -45,9 +47,12 @@ public:
 
 public:
     // solver parameters
-    static Property<float> velocityDissipation;
+    static Property<float> domainWidth;
+    static Property<float> mu;
+    static Property<float> rho;
+    // static Property<float> velocityDissipation;
     static Property<float> densityDissipation;
-    static Property<float> vorticityDissipation;
+    // static Property<float> vorticityDissipation;
     static Property<float> vorticityConfinement;
     static Property<int> jacobiIterCount;
 
@@ -58,9 +63,15 @@ public:
 
     static Property<bool> isRunning;
     static Property<bool> showQuivers;
+    static Property<bool> showLIC;
 
     // renderer
+    static std::string scalarFieldID;
+    static glm::vec2 scalarFieldRange;
     static Property<bool> renderRGB;
     static Property<int> quiverSamplingRate;
+    static Property<int> LIC_steps;
+    static Property<float> LIC_traceTime;
 
 };
+

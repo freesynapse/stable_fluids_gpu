@@ -29,11 +29,12 @@ FluidSimulator::FluidSimulator(const glm::vec2 &_vp, int _downsampling)
 
     // solver shaders
     m_advectionShader   = ShaderLibrary::load("advection_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/advect.frag"));
+    m_diffusionShader   = ShaderLibrary::load("diffusion_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/diffusion.frag"));
     m_divergenceShader  = ShaderLibrary::load("divergence_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/divergence.frag"));
     m_pressureShader    = ShaderLibrary::load("pressure_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/pressure.frag"));
     m_projectionShader  = ShaderLibrary::load("projection_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/projection.frag"));
     m_curlShader        = ShaderLibrary::load("curl_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/curl.frag"));
-    m_vorticityShader   = ShaderLibrary::load("vorticity_confinement_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/vorticity_confinement.frag"));
+    m_vorticityShader   = ShaderLibrary::load("vorticity_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/solver/vorticity.frag"));
 
     // interaction shaders
     m_splatShader = ShaderLibrary::load("splat_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/interaction/gaussian_splat.frag"));
@@ -41,6 +42,7 @@ FluidSimulator::FluidSimulator(const glm::vec2 &_vp, int _downsampling)
     m_clearShader = ShaderLibrary::load("clear_shader", FileName("../assets/shaders/stencil.vert"), FileName("../assets/shaders/interaction/clear.frag"));
 
     // visualization
+    m_fieldRenderer = FieldRenderer(m_vp);
     m_activeScalarField = DENSITY_FIELD;
     change_current_field_(0);
 
@@ -53,10 +55,11 @@ void FluidSimulator::onKeyPress(int _key)
 {
     switch (_key)
     {
-        case SYN_KEY_TAB:   Config::showQuivers = !Config::showQuivers(); break;
-        case SYN_KEY_SPACE: Config::isRunning = !Config::isRunning(); break;
-        case SYN_KEY_RIGHT: next_field_(); break;
-        case SYN_KEY_LEFT:  prev_field_(); break;
+        case SYN_KEY_TAB:       Config::showQuivers = !Config::showQuivers(); break;
+        case SYN_KEY_PARAGRAPH: Config::showLIC = !Config::showLIC(); break;
+        case SYN_KEY_SPACE:     Config::isRunning = !Config::isRunning(); break;
+        case SYN_KEY_RIGHT:     next_field_(); break;
+        case SYN_KEY_LEFT:      prev_field_(); break;
         case SYN_KEY_R:
         {
             Quad::bind();
@@ -113,17 +116,20 @@ void FluidSimulator::step(float _dt)
         return;
 
     m_dt = _dt;
+    m_dx = Config::domainWidth() / m_shape.x;
 
     Quad::bind();
 
     // advect the velocity by itself
-    advect(m_velocity, Config::velocityDissipation());
+    advect(m_velocity, 1.0f);
+    // advect(m_velocity, Config::velocityDissipation());
 
-    // compute the divergence for enforcing a divergence-free velocity field (below)
-    computeDivergence();
-    
+    // diffuse velocity (viscocity-dependant)
+    diffuseVelocity();
+
     // solve the pressure Poisson equation, using a Jacobi solver
-    solvePressure();
+    computeDivergence();
+    computePressure();
     
     // subtract the gradient of the pressure from the velocity, enforcing the
     // divergence-free fluid.
@@ -137,7 +143,7 @@ void FluidSimulator::step(float _dt)
     advect(m_density, Config::densityDissipation());
 
     //
-    add_time_to_avg(m_solverTimes, t.getDeltaTimeMs());
+    add_time_to_avg_(m_solverTimes, t.getDeltaTimeMs());
 
 }
 
@@ -147,40 +153,50 @@ void FluidSimulator::render(float _dt)
     if (!m_initialized)
         return;
 
+    setScalarField();
+
     switch (m_activeScalarField)
     {
-        case DENSITY_FIELD:
-            m_fieldRenderer.renderScalarField(m_density, false);
-            break;
-        
-        case PRESSURE_FIELD:
-            m_fieldRenderer.renderScalarField(m_pressure, true, PRESSURE_FIELD);
-            break;
-        
-        case CURL_FIELD:
-            m_fieldRenderer.renderScalarField(m_curl, true, CURL_FIELD);
-            break;
-
+        case DENSITY_FIELD:  m_fieldRenderer.renderScalarField(m_density); break;
+        case PRESSURE_FIELD: m_fieldRenderer.renderScalarField(m_pressure, &m_normRange); break;
+        case CURL_FIELD:     m_fieldRenderer.renderScalarField(m_curl, &m_normRange); break;
     }
 
     if (Config::showQuivers())
         m_fieldRenderer.renderVectorFieldQuivers(m_velocity, 
                                                  Config::quiverSamplingRate(), 
-                                                 true, 
-                                                 m_vp);
+                                                 true);
+
+    if (Config::showLIC())
+        m_fieldRenderer.renderVectorFieldLIC(m_velocity,
+                                             Config::LIC_steps(),
+                                             Config::LIC_traceTime());
 
 }
 
 //---------------------------------------------------------------------------------------
-const char *FluidSimulator::displayFieldName()
-{ 
+void FluidSimulator::setScalarField()
+{
+    std::pair<glm::vec4, glm::vec4> range;
+
     switch (m_activeScalarField)
     {
-        case DENSITY_FIELD:     return "DENSITY_FIELD";     break;
-        case PRESSURE_FIELD:    return "PRESSURE_FIELD";    break;
-        case CURL_FIELD:        return "CURL_FIELD";        break;
-        default:                return "UNKNOWN FIELD";     break;
-    }        
+        case DENSITY_FIELD:     range = { glm::vec4(0.0f), glm::vec4(1.0f) };
+                                Config::scalarFieldID = "DENSITY"; break;
+
+        case PRESSURE_FIELD:    range = m_pressure->range();
+                                if (Config::renderRGB())
+                                    m_fieldRenderer.setColorMap(CM_TOFINO);
+                                Config::scalarFieldID = "PRESSURE"; break;
+
+        case CURL_FIELD:        range = m_curl->range();
+                                if (Config::renderRGB())
+                                    m_fieldRenderer.setColorMap(CM_TOFINO);
+                                Config::scalarFieldID = "CURL"; break;
+    }
+
+    Config::scalarFieldRange = { range.first[0], range.second[0] };
+    float max = std::max(fabs(range.first[0]), fabs(range.second[0]));
+    m_normRange = { -max, max };
+
 }
-
-

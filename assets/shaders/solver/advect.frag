@@ -13,7 +13,6 @@ uniform float u_dt;
 void main()
 {
     vec2 coord = C - u_dt * texture(u_velocity, C).xy;
-    out_quantity = u_dissipation * texture(u_quantity, coord);
-    out_quantity.a = 1.0;
+    out_quantity = vec4(u_dissipation * texture(u_quantity, coord).xy, 0.0, 1.0);
 
 }

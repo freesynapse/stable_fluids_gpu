@@ -4,6 +4,14 @@
 #include "FieldRenderer.h"
 #include "Config.h"
 
+
+//
+#define DENSITY_FIELD       0
+#define PRESSURE_FIELD      1
+#define CURL_FIELD          2
+
+#define FIELD_COUNT         3
+
 //
 class FluidSimulator
 {
@@ -15,7 +23,8 @@ public:
     // interaction
     void handleInput();
     void onKeyPress(int _key);
-    const char *displayFieldName();
+    void setScalarField();
+
     float avgStepTimeMs() { return m_solverTimeAvgMs; }
 
     // solver
@@ -47,21 +56,21 @@ private:
     }
 
     __always_inline
-    void add_time_to_avg(std::list<float> &_list, float _time_ms)
+    void add_time_to_avg_(std::list<float> &_list, float _time_ms)
     {
         static int n = 100;
         if (_list.size() >= n)
             _list.pop_front();
         _list.push_back(_time_ms);
-
         m_solverTimeAvgMs = std::accumulate(_list.begin(), _list.end(), 0.0f) / (float)_list.size();
     }
 
 private:
     // solver functions -- in FluidSimulatorSolver.cpp
     void advect(Ref<FieldFBO> &_quantity, float _dissipation);
+    void diffuseVelocity();
     void computeDivergence();
-    void solvePressure();
+    void computePressure();
     void subtractPressureGradient();
     void computeCurl();
     void applyVorticityConfinement();
@@ -85,9 +94,11 @@ private:
     glm::vec2 m_txSize;
     bool m_initialized = false;
     Ref<Quad> m_quad = nullptr;
+    glm::vec2 m_normRange;
 
     // solver parameters
     float m_dt = 0.0f;
+    float m_dx = 0.0f;
 
     //
     std::list<float> m_solverTimes;
@@ -104,6 +115,7 @@ private:
 
     // solver shaders
     Ref<Shader> m_advectionShader;
+    Ref<Shader> m_diffusionShader;
     Ref<Shader> m_divergenceShader;
     Ref<Shader> m_pressureShader;
     Ref<Shader> m_projectionShader;

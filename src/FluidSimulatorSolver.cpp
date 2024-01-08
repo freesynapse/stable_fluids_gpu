@@ -11,10 +11,39 @@ void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
     m_advectionShader->setUniform1i("u_velocity", 0);
     _quantity->bindTexture(1, 0, GL_LINEAR);
     m_advectionShader->setUniform1i("u_quantity", 1);
-    m_advectionShader->setUniform1f("u_dissipation", _dissipation);
+    // m_advectionShader->setUniform1f("u_dissipation", _dissipation);
+    m_advectionShader->setUniform1f("u_dissipation", 1.0f);
     m_advectionShader->setUniform1f("u_dt", m_dt);
     Quad::render();
     std::swap(m_tmpField, _quantity);
+
+}
+
+//---------------------------------------------------------------------------------------
+void FluidSimulator::diffuseVelocity()
+{
+    float nu = Config::mu() / Config::rho();
+    float dx2_nudt = std::pow(m_dx, 2) / (nu * m_dt);
+
+    m_tmpField2->bind();
+    m_diffusionShader->enable();
+    m_diffusionShader->setUniform2fv("u_tx_size", m_txSize);
+    m_diffusionShader->setUniform1f("u_dx2_nudt", dx2_nudt);
+    m_velocity->bindTexture(0);
+    m_diffusionShader->setUniform1i("u_velocity", 0);
+    m_velocity->bindTexture(1);
+    m_diffusionShader->setUniform1i("u_old_velocity", 1);
+    Quad::render();
+
+    for (int i = 0; i < Config::jacobiIterCount(); i++)
+    {
+        m_tmpField->bind();
+        m_tmpField2->bindTexture(0);
+        Quad::render();
+        std::swap(m_tmpField, m_tmpField2);
+    }
+    
+    std::swap(m_tmpField2, m_velocity);
 
 }
 
@@ -26,11 +55,12 @@ void FluidSimulator::computeDivergence()
     m_divergenceShader->setUniform2fv("u_tx_size", m_txSize);
     m_velocity->bindTexture(0);
     m_divergenceShader->setUniform1i("u_velocity", 0);
+    m_divergenceShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
     Quad::render();    
 }
 
 //---------------------------------------------------------------------------------------
-void FluidSimulator::solvePressure()
+void FluidSimulator::computePressure()
 {
     m_tmpField->bind();
     m_pressureShader->enable();
@@ -39,10 +69,11 @@ void FluidSimulator::solvePressure()
     m_pressureShader->setUniform1i("u_divergence", 0);
     m_pressure->bindTexture(1);
     m_pressureShader->setUniform1i("u_pressure", 1);
+    m_pressureShader->setUniform1f("u_dx2", std::pow(m_dx, 2));
     Quad::render();
     
     // m_tmpField now holds the pressure
-    for (uint32_t i = 0; i < Config::jacobiIterCount(); i++)
+    for (int i = 0; i < Config::jacobiIterCount(); i++)
     {
         m_tmpField2->bind();
         m_divergence->bindTexture(0);
@@ -66,6 +97,7 @@ void FluidSimulator::subtractPressureGradient()
     m_projectionShader->setUniform1i("u_pressure", 0);
     m_velocity->bindTexture(1);
     m_projectionShader->setUniform1i("u_velocity", 1);
+    m_projectionShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
     Quad::render();
     std::swap(m_tmpField, m_velocity);
 
@@ -79,6 +111,7 @@ void FluidSimulator::computeCurl()
     m_curlShader->setUniform2fv("u_tx_size", m_txSize);
     m_velocity->bindTexture(0);
     m_curlShader->setUniform1i("u_velocity", 0);
+    m_curlShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
     Quad::render();
 
 }
@@ -90,8 +123,9 @@ void FluidSimulator::applyVorticityConfinement()
     m_vorticityShader->enable();
     m_vorticityShader->setUniform2fv("u_tx_size", m_txSize);
     m_vorticityShader->setUniform1f("u_confinement", Config::vorticityConfinement());
-    m_vorticityShader->setUniform1f("u_Dissipation", Config::vorticityDissipation());
+    // m_vorticityShader->setUniform1f("u_dissipation", Config::vorticityDissipation());
     m_vorticityShader->setUniform1f("u_dt", m_dt);
+    m_vorticityShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);  //
     m_velocity->bindTexture(0);
     m_vorticityShader->setUniform1i("u_velocity", 0);
     m_curl->bindTexture(1);
