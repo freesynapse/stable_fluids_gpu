@@ -21,7 +21,7 @@ public:
     ~FluidSimulator() = default;
 
     // interaction
-    void handleInput();
+    void onMouse();
     void onKeyPress(int _key);
     void setScalarField();
 
@@ -76,6 +76,7 @@ private:
     void applyVorticityConfinement();
 
     // helper functions
+    void addForces();
     void applyForce(const glm::vec2 &_pos,          // pos is normalized to [0..1]
                     const glm::vec2 &_direction,
                     float _force);
@@ -99,6 +100,12 @@ private:
     // solver parameters
     float m_dt = 0.0f;
     float m_dx = 0.0f;
+
+    // interaction
+    glm::vec2 m_mousePosNorm = glm::vec2(0.5f);
+    glm::vec2 m_forceDirection = glm::vec2(0.0f);
+    float m_force = 0.0f;
+    bool m_applyForces = false;
 
     //
     std::list<float> m_solverTimes;

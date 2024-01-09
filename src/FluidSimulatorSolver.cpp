@@ -1,6 +1,9 @@
 
 #include "FluidSimulator.h"
 
+#include <synapse/Input>
+
+
 //
 void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
 {
@@ -12,7 +15,6 @@ void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
     _quantity->bindTexture(1, 0, GL_LINEAR);
     m_advectionShader->setUniform1i("u_quantity", 1);
     m_advectionShader->setUniform1f("u_dissipation", _dissipation);
-    // m_advectionShader->setUniform1f("u_dissipation", 1.0f);
     m_advectionShader->setUniform1f("u_dt", m_dt);
     Quad::render();
     std::swap(m_tmpField, _quantity);
@@ -22,13 +24,16 @@ void FluidSimulator::advect(Ref<FieldFBO> &_quantity, float _dissipation)
 //---------------------------------------------------------------------------------------
 void FluidSimulator::diffuseVelocity()
 {
-    float nu = Config::mu() / Config::rho();
+    float mu  = std::pow(10.0f, (float)Config::mu());
+    float rho = std::pow(10.0f, (float)Config::rho());
+    float nu  = mu / rho;
     float dx2_nudt = std::pow(m_dx, 2) / (nu * m_dt);
 
     m_tmpField2->bind();
     m_diffusionShader->enable();
     m_diffusionShader->setUniform2fv("u_tx_size", m_txSize);
-    m_diffusionShader->setUniform1f("u_dx2_nudt", dx2_nudt);
+    m_diffusionShader->setUniform1f("u_alpha", dx2_nudt);
+    m_diffusionShader->setUniform1f("u_beta", 4.0f + dx2_nudt);
     m_velocity->bindTexture(0);
     m_diffusionShader->setUniform1i("u_velocity", 0);
     m_velocity->bindTexture(1);
@@ -55,13 +60,15 @@ void FluidSimulator::computeDivergence()
     m_divergenceShader->setUniform2fv("u_tx_size", m_txSize);
     m_velocity->bindTexture(0);
     m_divergenceShader->setUniform1i("u_velocity", 0);
-    m_divergenceShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
+    m_divergenceShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);
     Quad::render();    
 }
 
 //---------------------------------------------------------------------------------------
 void FluidSimulator::computePressure()
 {
+    computeDivergence();
+
     m_tmpField->bind();
     m_pressureShader->enable();
     m_pressureShader->setUniform2fv("u_tx_size", m_txSize);
@@ -69,7 +76,8 @@ void FluidSimulator::computePressure()
     m_pressureShader->setUniform1i("u_divergence", 0);
     m_pressure->bindTexture(1);
     m_pressureShader->setUniform1i("u_pressure", 1);
-    m_pressureShader->setUniform1f("u_dx2", std::pow(m_dx, 2));
+    m_pressureShader->setUniform1f("u_alpha", std::pow(m_dx, 2));
+    m_pressureShader->setUniform1f("u_beta", 4.0f);
     Quad::render();
     
     // m_tmpField now holds the pressure
@@ -97,7 +105,7 @@ void FluidSimulator::subtractPressureGradient()
     m_projectionShader->setUniform1i("u_pressure", 0);
     m_velocity->bindTexture(1);
     m_projectionShader->setUniform1i("u_velocity", 1);
-    m_projectionShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
+    m_projectionShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);
     Quad::render();
     std::swap(m_tmpField, m_velocity);
 
@@ -111,7 +119,7 @@ void FluidSimulator::computeCurl()
     m_curlShader->setUniform2fv("u_tx_size", m_txSize);
     m_velocity->bindTexture(0);
     m_curlShader->setUniform1i("u_velocity", 0);
-    m_curlShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);   //
+    m_curlShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);
     Quad::render();
 
 }
@@ -123,9 +131,8 @@ void FluidSimulator::applyVorticityConfinement()
     m_vorticityShader->enable();
     m_vorticityShader->setUniform2fv("u_tx_size", m_txSize);
     m_vorticityShader->setUniform1f("u_confinement", Config::vorticityConfinement());
-    // m_vorticityShader->setUniform1f("u_dissipation", Config::vorticityDissipation());
     m_vorticityShader->setUniform1f("u_dt", m_dt);
-    m_vorticityShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);  //
+    m_vorticityShader->setUniform1f("u_half_inv_dx", 0.5f / m_dx);
     m_velocity->bindTexture(0);
     m_vorticityShader->setUniform1i("u_velocity", 0);
     m_curl->bindTexture(1);
@@ -136,6 +143,32 @@ void FluidSimulator::applyVorticityConfinement()
 }
 
 //---------------------------------------------------------------------------------------
+void FluidSimulator::addForces()
+{
+    if (m_applyForces)
+    {
+        if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1))
+        {
+            applyForce(m_mousePosNorm, m_forceDirection, m_force);
+            addDensity(m_mousePosNorm);
+
+        }
+        else if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_2))
+        {
+            applyForce(m_mousePosNorm, m_forceDirection, m_force);
+
+        }
+
+    }
+    else if (InputManager::is_key_pressed(SYN_KEY_SPACE))
+    {
+        applyForce(m_mousePosNorm, m_forceDirection, m_force);
+        addDensity(m_mousePosNorm);
+
+    }
+    
+}
+
 void FluidSimulator::applyForce(const glm::vec2 &_pos, 
                                 const glm::vec2 &_direction, 
                                 float _force)

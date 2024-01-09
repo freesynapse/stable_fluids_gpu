@@ -72,7 +72,7 @@ void layer::onUpdate(float _dt)
     
     // -- BEGINNING OF SIMULATION -- //
 
-    m_fluid.handleInput();
+    // m_fluid.handleInput();
     m_fluid.step(_dt);
         
     // -- END OF SIMULATION -- //

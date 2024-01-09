@@ -7,12 +7,12 @@
 
 // static decls
 Property<float>     Config::domainWidth(1.0f, 1.0f, 5.0f);
-Property<float>     Config::mu(0.001f, 0.0f, 1.0f);
-Property<float>     Config::rho(100.0f, 10.0f, 10000.0f);
+Property<int>       Config::mu(-3, -10, 0);
+Property<int>       Config::rho(2, 1, 6);
 // Property<float>     Config::velocityDissipation(0.997f, 0.95f, 1.0f);
 Property<float>     Config::densityDissipation(0.997f, 0.95f, 1.0f);
 // Property<float>     Config::vorticityDissipation(0.9f, 0.0f, 1.0f);
-Property<float>     Config::vorticityConfinement(0.02f, 0.0f, 0.2f);
+Property<float>     Config::vorticityConfinement(0.01f, 0.0f, 0.2f);
 Property<int>       Config::jacobiIterCount(40, 5, 100);
 
 Property<float>     Config::forceRadius(0.001f, 0.001f, 0.02f);
@@ -40,8 +40,8 @@ void Config::settingsDialog()
     if (ImGui::TreeNode("Solver parameters"))
     {
         ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##domain", &domainWidth.m_val, domainWidth.m_min, domainWidth.m_max, "%.1f", 1.0f); ImGui::SameLine(); ImGui::Text("domain width"); 
-        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##mu", &mu.m_val, mu.m_min, mu.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("mu"); 
-        ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##rho", &rho.m_val, rho.m_min, rho.m_max, "%.1f", 1.0f); ImGui::SameLine(); ImGui::Text("rho"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderInt("##mu", &mu.m_val, mu.m_min, mu.m_max, "%d", 1.0f); ImGui::SameLine(); ImGui::Text("viscocity (10^x)"); 
+        ImGui::SetNextItemWidth(300.0f); ImGui::SliderInt("##rho", &rho.m_val, rho.m_min, rho.m_max, "%.1f", 1.0f); ImGui::SameLine(); ImGui::Text("density (10^x)"); 
         // ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##velocity", &velocityDissipation.m_val, velocityDissipation.m_min, velocityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("velocity dissipation"); 
         ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##density", &densityDissipation.m_val, densityDissipation.m_min, densityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("density dissipation"); 
         // ImGui::SetNextItemWidth(300.0f); ImGui::SliderFloat("##vorticity", &vorticityDissipation.m_val, vorticityDissipation.m_min, vorticityDissipation.m_max, "%.3f", 1.0f); ImGui::SameLine(); ImGui::Text("vorticity dissipation"); 

@@ -40,7 +40,8 @@ layout (location = 0) out vec4 out_color;
 in vec2 v_rot;
 in float v_output_dot;
 
-uniform vec4 u_arrow_color = vec4(1.0);
+#define ARROW_ALPHA 0.3
+uniform vec4 u_arrow_color = vec4(1.0, 1.0, 1.0, ARROW_ALPHA);
 uniform float u_linewidth = 0.08;
 uniform float u_antialias = 0.01;
 
@@ -125,7 +126,7 @@ void main()
     {
         vec4 color = vec4(1.0, 1.0, 1.0, 0.0);
         if (length(p) < 0.03)
-            color.a = 1.0;
+            color.a = ARROW_ALPHA;
 
         out_color = color;
     }

@@ -212,7 +212,6 @@ private:
         for (auto& n : noise_data)
             n = Random::rand_fC();
         m_noise->setData((void*)&noise_data[0], sz * sizeof(float));
-        SYN_TRACE("noise created for LIC");
 
     }
 

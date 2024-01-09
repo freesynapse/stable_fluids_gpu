@@ -48,8 +48,8 @@ public:
 public:
     // solver parameters
     static Property<float> domainWidth;
-    static Property<float> mu;
-    static Property<float> rho;
+    static Property<int> mu;
+    static Property<int> rho;
     // static Property<float> velocityDissipation;
     static Property<float> densityDissipation;
     // static Property<float> vorticityDissipation;

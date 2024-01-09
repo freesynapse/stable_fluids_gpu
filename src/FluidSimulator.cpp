@@ -57,7 +57,7 @@ void FluidSimulator::onKeyPress(int _key)
     {
         case SYN_KEY_TAB:       Config::showQuivers = !Config::showQuivers(); break;
         case SYN_KEY_PARAGRAPH: Config::showLIC = !Config::showLIC(); break;
-        case SYN_KEY_SPACE:     Config::isRunning = !Config::isRunning(); break;
+        case SYN_KEY_P:         Config::isRunning = !Config::isRunning(); break;
         case SYN_KEY_RIGHT:     next_field_(); break;
         case SYN_KEY_LEFT:      prev_field_(); break;
         case SYN_KEY_R:
@@ -73,35 +73,26 @@ void FluidSimulator::onKeyPress(int _key)
 }
 
 //---------------------------------------------------------------------------------------
-void FluidSimulator::handleInput()
+void FluidSimulator::onMouse()
 {
-    static glm::vec2 mpos, prev_mpos;
-    mpos = InputManager::get_mouse_position();
-    glm::vec2 mpos_norm = mpos_vp_to_screen_(mpos);
-
+    static glm::vec2 prev_mpos;
+    glm::vec2 mpos = InputManager::get_mouse_position();
+    
     // direction vector of force application
-    if (mpos != prev_mpos)
+    if (mpos != prev_mpos && (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1) ||
+                              InputManager::is_button_pressed(SYN_MOUSE_BUTTON_2)))
     {
-        // glm::vec2 delta_mpos = mpos - prev_mpos;
-        glm::vec2 delta_mpos = mpos_norm - mpos_vp_to_screen_(prev_mpos);
-        glm::vec2 dir = glm::normalize(delta_mpos);
-        float force = min(Config::forceMultiplier() * glm::length(delta_mpos), Config::forceMultiplier.m_max);
-     
-        if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1))
-        {
-            Quad::bind();
-            applyForce(mpos_norm, dir, force);
-            addDensity(mpos_norm);
-
-        }
-        else if (InputManager::is_button_pressed(SYN_MOUSE_BUTTON_2))
-        {
-            Quad::bind();
-            applyForce(mpos_norm, dir, force);
-
-        }
+        m_mousePosNorm = mpos_vp_to_screen_(mpos);
+        glm::vec2 delta_mpos = m_mousePosNorm - mpos_vp_to_screen_(prev_mpos);
+        m_forceDirection = glm::normalize(delta_mpos);
+        m_force = min(Config::forceMultiplier() * glm::length(delta_mpos), Config::forceMultiplier.m_max);
+        m_applyForces = true;
 
     }
+
+    else if (!InputManager::is_button_pressed(SYN_MOUSE_BUTTON_1) && 
+             !InputManager::is_button_pressed(SYN_MOUSE_BUTTON_2))
+        m_applyForces = false;
 
     prev_mpos = mpos;
 
@@ -110,6 +101,8 @@ void FluidSimulator::handleInput()
 //---------------------------------------------------------------------------------------
 void FluidSimulator::step(float _dt)
 {
+    onMouse();
+
     Timer t;
 
     if (!m_initialized || !Config::isRunning())
@@ -127,8 +120,10 @@ void FluidSimulator::step(float _dt)
     // diffuse velocity (viscocity-dependant)
     diffuseVelocity();
 
+    //
+    addForces();
+
     // solve the pressure Poisson equation, using a Jacobi solver
-    computeDivergence();
     computePressure();
     
     // subtract the gradient of the pressure from the velocity, enforcing the
@@ -185,16 +180,16 @@ void FluidSimulator::setScalarField()
                                 Config::scalarFieldID = "DENSITY"; break;
 
         case PRESSURE_FIELD:    range = m_pressure->range();
-                                if (Config::renderRGB())
-                                    m_fieldRenderer.setColorMap(CM_TOFINO);
                                 Config::scalarFieldID = "PRESSURE"; break;
 
         case CURL_FIELD:        range = m_curl->range();
-                                if (Config::renderRGB())
-                                    m_fieldRenderer.setColorMap(CM_TOFINO);
+                                // if (Config::renderRGB())
+                                //     m_fieldRenderer.setColorMap(CM_TOFINO);
                                 Config::scalarFieldID = "CURL"; break;
     }
 
+    if (Config::renderRGB())
+        m_fieldRenderer.setColorMap(CM_TOFINO);
     Config::scalarFieldRange = { range.first[0], range.second[0] };
     float max = std::max(fabs(range.first[0]), fabs(range.second[0]));
     m_normRange = { -max, max };
