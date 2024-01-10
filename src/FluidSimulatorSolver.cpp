@@ -33,7 +33,7 @@ void FluidSimulator::diffuseVelocity()
     m_diffusionShader->enable();
     m_diffusionShader->setUniform2fv("u_tx_size", m_txSize);
     m_diffusionShader->setUniform1f("u_alpha", dx2_nudt);
-    m_diffusionShader->setUniform1f("u_beta", 4.0f + dx2_nudt);
+    m_diffusionShader->setUniform1f("u_beta_inv", 1.0f / (4.0f + dx2_nudt));
     m_velocity->bindTexture(0);
     m_diffusionShader->setUniform1i("u_velocity", 0);
     m_velocity->bindTexture(1);
@@ -77,7 +77,7 @@ void FluidSimulator::computePressure()
     m_pressure->bindTexture(1);
     m_pressureShader->setUniform1i("u_pressure", 1);
     m_pressureShader->setUniform1f("u_alpha", std::pow(m_dx, 2));
-    m_pressureShader->setUniform1f("u_beta", 4.0f);
+    m_pressureShader->setUniform1f("u_beta_inv", 1.0f / 4.0f);
     Quad::render();
     
     // m_tmpField now holds the pressure
